@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Air Quality Visualizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4CAF50;
+      --primary-dark: #388E3C;
+      --secondary-color: #007BFF;
+      --secondary-dark: #0056b3;
+      --text-color: #333;
+      --background-light: #f4f7f6;
+      --background-card: #ffffff;
+      --border-color: #e0e0e0;
+      --shadow-light: rgba(0, 0, 0, 0.08);
+      --shadow-medium: rgba(0, 0, 0, 0.15);
+      --success-color: #28a745;
+      --warning-color: #ffc107;
+      --danger-color: #dc3545;
+      --critical-color: #6c1a1a;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background-light);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    header {
+      background-image: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+      padding: 25px;
+      text-align: center;
+      color: white;
+      font-size: 2.2em;
+      font-weight: 700;
+      box-shadow: 0 4px 15px var(--shadow-medium);
+      letter-spacing: 1px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 30px;
+      background-color: var(--background-card);
+      border-radius: 15px;
+      box-shadow: 0 8px 25px var(--shadow-medium);
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    /* Input Group Styling */
+    .input-group {
+      display: flex;
+      gap: 15px;
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .input-group > div {
+        flex-grow: 1;
+    }
+
+    .input-group label {
+      margin-bottom: 10px;
+      display: block;
+      color: var(--text-color);
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+
+    .input-group select {
+      width: 100%;
+      padding: 14px 18px;
+      font-size: 17px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000%22%20d%3D%22M287%2069.1%20c9.3-9.3%2024.5-9.3%2033.9%200l28.2%2028.2c9.3%209.3%209.3%2024.5%200%2033.9L165.7%20281.3c-9.3%209.3-24.5%209.3-33.9%200L5.3%20131.2c-9.3-9.3-9.3-24.5%200-33.9L33.5%2069.1c9.3-9.3%2024.5-9.3%2033.9%200L146.2%20177.3l110.9-108.2z%22%2F%3E%3C%2Fsvg%3E');
+      background-repeat: no-repeat;
+      background-position: right 15px top 50%;
+      background-size: 1em auto;
+    }
+
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
+
+    .input-group button {
+      flex-shrink: 0;
+      width: auto;
+      padding: 14px 25px;
+      background-color: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .input-group button:hover {
+      background-color: var(--secondary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+    }
+
+    /* Map Box */
+    .map-box {
+      position: relative;
+      width: 100%;
+      height: 450px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      background-color: var(--background-light);
+      box-shadow: 0 6px 20px var(--shadow-light);
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    .map-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.8);
+    }
+
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.45;
+      mix-blend-mode: multiply;
+    }
+
+    /* Cards */
+    .card {
+      padding: 25px;
+      border-radius: 12px;
+      background-color: var(--background-card);
+      box-shadow: 0 6px 20px var(--shadow-light);
+      border-left: 6px solid var(--border-color);
+      transition: all 0.4s ease;
+      animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    .card h2, .card h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: var(--text-color);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .card p {
+      margin-bottom: 10px;
+    }
+
+    /* AQI Status Colors */
+    .good { border-left-color: var(--success-color); }
+    .moderate { border-left-color: var(--warning-color); }
+    .unhealthy { border-left-color: var(--danger-color); }
+    .hazardous { border-left-color: var(--critical-color); }
+
+    /* AQI Legend */
+    .aqi-legend ul {
+      list-style-type: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+    }
+
+    .aqi-legend li {
+      margin: 0;
+      font-size: 0.95em;
+      display: flex;
+      align-items: center;
+      background-color: var(--background-light);
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .aqi-legend li:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px var(--shadow-light);
+    }
+
+    .aqi-legend li span {
+      font-weight: 600;
+      margin-right: 10px;
+      font-size: 1.2em;
+    }
+
+    /* Result Card Specifics */
+    #selectedLocation {
+      font-size: 1.8em;
+      color: var(--text-color);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    #aqiValue {
+      font-size: 2.5em;
+      font-weight: 700;
+      display: block;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      color: var(--secondary-color);
+      transition: color 0.3s ease;
+    }
+
+    #statusText {
+      font-size: 1.3em;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 10px;
+      color: var(--text-color);
+    }
+
+    #lastUpdated {
+      font-style: italic;
+      font-size: 0.9em;
+      color: #777;
+      margin-top: -5px;
+      margin-bottom: 20px;
+    }
+
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px var(--shadow-light);
+      border-radius: 10px;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 15px;
+      text-align: center;
+      font-size: 1em;
+    }
+
+    th {
+      background-color: var(--background-light);
+      font-weight: 600;
+      color: var(--text-color);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:first-child th:first-child { border-top-left-radius: 10px; }
+    tr:first-child th:last-child { border-top-right-radius: 10px; }
+    tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+    tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+
+    tbody tr:nth-child(even) {
+      background-color: var(--background-light);
+    }
+
+    tbody tr:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+      cursor: pointer;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      header {
+        font-size: 1.8em;
+        padding: 20px;
+      }
+      .container {
+        margin: 20px auto;
+        padding: 20px;
+        gap: 20px;
+      }
+      .input-group {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+      }
+      .input-group select, .input-group button {
+        width: 100%;
+      }
+      .map-box {
+        height: 300px;
+      }
+      .aqi-legend ul {
+        grid-template-columns: 1fr;
+      }
+      select, button {
+        padding: 12px;
+        font-size: 16px;
+      }
+      .card h2 {
+        font-size: 1.5em;
+      }
+      #aqiValue {
+        font-size: 2em;
+      }
+      #statusText {
+        font-size: 1.1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>🌿 Air Quality Visualizer</header>
+  <div class="container">
+    <div class="input-group">
+      <div>
+        <label for="location">Select Location:</label>
+        <select id="location">
+          <option value="Town A">Town A</option>
+          <option value="Town B">Town B</option>
+          <option value="Village C">Village C</option>
+        </select>
+      </div>
+      <button id="checkBtn">Check Air Quality</button>
+    </div>
+
+    <div id="mapBox" class="map-box" style="display: none;">
+      <img id="mapImage" src="" alt="Map Placeholder">
+      <div id="colorOverlay" class="overlay"></div>
+    </div>
+
+    <div class="card aqi-legend">
+      <h3>AQI Legend</h3>
+      <ul>
+        <li><span style="color:var(--success-color);">🟢 Good (0–50):</span> Air quality is good.</li>
+        <li><span style="color:var(--warning-color);">🟠 Moderate (51–100):</span> Acceptable but may affect sensitive groups.</li>
+        <li><span style="color:var(--danger-color);">🔴 Unhealthy (101–200):</span> Health effects for everyone; sensitive groups avoid.</li>
+        <li><span style="color:var(--critical-color);">🟣 Hazardous (201–500):</span> Serious health effects; avoid outdoor activity.</li>
+      </ul>
+    </div>
+
+    <div id="result" class="card" style="display:none;">
+      <h2 id="selectedLocation"></h2>
+      <p><strong>Current AQI:</strong> <span id="aqiValue"></span></p>
+      <p id="lastUpdated"></p>
+      <p><strong>Status:</strong> <span id="statusText"></span></p>
+      <p><strong>Health Recommendation:</strong></p>
+      <p id="recommendation"></p>
+    </div>
+
+    <div id="forecast" class="card" style="display:none;">
+      <h3>Next 3 Days Forecast</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Predicted AQI</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="forecastBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Using source.unsplash.com for dynamic, random images based on keywords
+    // These are generally more reliable for client-side demos.
+    const images = {
+      "Town A": "https://source.unsplash.com/800x450/?city,urban,skyline",
+      "Town B": "https://source.unsplash.com/800x450/?village,town,houses",
+      "Village C": "https://source.unsplash.com/800x450/?landscape,rural,nature,fields"
+    };
+
+    const aqiLevels = [
+      { max: 50, status: "Good", color: "var(--success-color)", recommendation: "Air quality is good. Enjoy outdoor activities." },
+      { max: 100, status: "Moderate", color: "var(--warning-color)", recommendation: "Sensitive groups should limit prolonged outdoor exertion." },
+      { max: 200, status: "Unhealthy", color: "var(--danger-color)", recommendation: "Everyone should limit outdoor activity. Sensitive groups avoid it." },
+      { max: 500, status: "Hazardous", color: "var(--critical-color)", recommendation: "Avoid outdoor activity. Use masks/purifiers. Stay indoors." }
+    ];
+
+    function getAQIStatus(aqi) {
+      return aqiLevels.find(level => aqi <= level.max);
+    }
+
+    function randomAQI(location) {
+      if (location === "Village C") {
+        return Math.floor(Math.random() * 40) + 10;
+      } else {
+        return Math.floor(Math.random() * 400) + 20;
+      }
+    }
+
+    function generateForecast(location) {
+      return [randomAQI(location), randomAQI(location), randomAQI(location)];
+    }
+
+    document.getElementById("checkBtn").addEventListener("click", () => {
+      const location = document.getElementById("location").value;
+      const currentAQI = randomAQI(location);
+      const statusInfo = getAQIStatus(currentAQI);
+
+      if (currentAQI > 100) {
+        alert(`⚠️ ALERT: Air quality is ${statusInfo.status.toUpperCase()} at ${location}. Please take precautions!`);
+      }
+
+      const now = new Date();
+      document.getElementById("lastUpdated").textContent = `Last Updated: ${now.toLocaleString()}`;
+
+      document.getElementById("mapImage").src = images[location];
+      document.getElementById("colorOverlay").style.backgroundColor = statusInfo.color;
+      
+      const mapBox = document.getElementById("mapBox");
+      mapBox.style.display = "block";
+      mapBox.style.animation = "none";
+      void mapBox.offsetWidth;
+      mapBox.style.animation = "fadeIn 0.8s ease-out forwards";
+
+      const resultCard = document.getElementById("result");
+      resultCard.className = `card ${statusInfo.status.toLowerCase()}`;
+      document.getElementById("selectedLocation").textContent = location;
+      const aqiValueSpan = document.getElementById("aqiValue");
+      aqiValueSpan.textContent = currentAQI;
+      aqiValueSpan.style.color = statusInfo.color;
+      document.getElementById("statusText").textContent = statusInfo.status;
+      document.getElementById("statusText").style.color = statusInfo.color;
+      document.getElementById("recommendation").textContent = statusInfo.recommendation;
+      
+      resultCard.style.display = "block";
+      resultCard.style.animation = "none";
+      void resultCard.offsetWidth;
+      resultCard.style.animation = "fadeIn 0.8s ease-out forwards";
+
+      const forecastData = generateForecast(location);
+      const forecastBody = document.getElementById("forecastBody");
+      forecastBody.innerHTML = "";
+      forecastData.forEach((aqi, i) => {
+        const status = getAQIStatus(aqi);
+        forecastBody.innerHTML += `
+          <tr>
+            <td>Day ${i + 1}</td>
+            <td>${aqi}</td>
+            <td style="color: ${status.color}; font-weight: 600;">${status.status}</td>
+          </tr>
+        `;
+      });
+      
+      const forecastCard = document.getElementById("forecast");
+      forecastCard.style.display = "block";
+      forecastCard.style.animation = "none";
+      void forecastCard.offsetWidth;
+      forecastCard.style.animation = "fadeIn 0.8s ease-out forwards";
+    });
+  </script>
+</body>
+</html>
